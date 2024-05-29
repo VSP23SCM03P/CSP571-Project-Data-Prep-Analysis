@@ -1,0 +1,748 @@
+---
+title: "project"
+author: "Vidheesha Patil"
+date: "2024-04-18"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+```{r}
+crime_data<- read.csv('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/CrimesPresent4years.csv',header=TRUE,stringsAsFactors=FALSE)
+dailyboard_data <-read.csv('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/CTA_-_Ridership_-_Daily_Boarding_Totals_20240417.csv',header=TRUE,stringsAsFactors=FALSE)
+print(names(crime_data))
+missing_values <- colSums(is.na(crime_data))
+print(missing_values)
+```
+
+
+```{r}
+# Check for duplicate rows
+duplicate_rows <- crime_data[duplicated(crime_data),]
+print(duplicate_rows)
+
+```
+
+
+```{r}
+
+str(crime_data)
+
+```
+
+
+
+
+```{r}
+# Convert the "Date" column to Date type
+crime_data$Date <- as.Date(crime_data$Date, format = "%m/%d/%Y")
+# Check the structure of the dataframe after splitting
+str(crime_data)
+
+```
+
+```{r}
+crime_data$Date <- as.Date(crime_data$Date,"%m/%d/%y %I:%M:%S %p")
+crime_data$day_of_week<-weekdays(crime_data$Date)
+countdailycrimes<- aggregate(crime_data$ID,by=list(crime_data$Date),FUN=length)
+colnames(countdailycrimes)<- c("CrimeDate","countCrime")
+print(countdailycrimes)
+#print(countdailycrimes,colnames())
+
+```
+
+
+```{r}
+
+library(ggplot2)
+
+ggplot(countdailycrimes, aes(x = CrimeDate, y = countCrime)) +
+  geom_line(color = "blue") +  
+  labs(x = "Date of Crime Committed", y = "Crime Count Daily basis", title = "The Count of Crimes committed on CTA Daily") +
+  theme(
+    text = element_text( size = 10, color = "black", face = "bold"),  # For general text settings
+    plot.title = element_text(color = "red", size = 14),  # For the plot title
+    axis.title = element_text(color = "blue", size = 12),  # For axis titles
+    axis.text = element_text(color = "maroon", size = 10)  # For axis labels
+  )
+
+```
+```{r}
+
+
+
+ggplot(countdailycrimes, aes(x = CrimeDate, y = countCrime)) +
+  geom_bar(stat="identity",width=0.5,fill = "maroon") +  
+  labs(x = "Date of Crime Committed", y = "Crime Count Daily basis", title = "The Bar Plot of Count of Crimes Daily") +
+  theme(
+    text = element_text( size = 10, color = "black", face = "bold"),  # For general text settings
+    plot.title = element_text(color = "red", size = 14),  # For the plot title
+    axis.title = element_text(color = "blue", size = 12),  # For axis titles
+    axis.text = element_text(color = "maroon", size = 10)  # For axis labels
+  )
+
+```
+
+ ###END OF CRIME DATA FRAME
+----------------------------
+
+###### Preparation of Weather Data ###
+
+```{r}
+weather_origData = read.csv(file.path('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/weather orig.csv'))
+summary(weather_origData)
+str(weather_origData)
+```
+
+```{r}
+
+
+# Replace empty strings with 0
+#weatherData[weatherData == ""] <- "0"
+weather_origData[is.na(weather_origData) | weather_origData == ""] <- 0.0
+
+# Printing the modified data
+print(weather_origData)
+
+```
+
+```{r}
+#check for missing rows
+miss_vals <- colSums(is.na(weather_origData))
+print(miss_vals)
+
+# Check for duplicate rows
+duplicates <- weather_origData[duplicated(weather_origData),]
+print(duplicates)
+```
+
+
+
+
+```{r}
+
+New_weather = cbind(weather_origData[1],weather_origData[3],weather_origData[4],weather_origData[5],weather_origData[6],weather_origData[7],weather_origData[8])
+print(New_weather)
+```
+
+```{r}
+# convert the date column to a Date object
+New_weather$Date <- as.Date(New_weather$Date, format = "%m/%d/%Y")
+# format the date column to the desired format
+New_weather$Date <- format(New_weather$Date, "%Y-%m-%d")
+print(New_weather)
+
+```
+
+```{r}
+New_weather$Date <- as.Date(New_weather$Date)
+summary(New_weather)
+
+```
+```{r}
+# create a subset of weatherData2 dataframe containing only the rows corresponding to the year 2023.
+subData <- subset(New_weather, Date >= "2023-01-01" & Date <= "2023-12-31")
+print(subData)
+
+```
+
+```{r}
+#search for patterns at the beginning of each date that match two digits (\\d{2}) and replace with "20". This converts two-digit years into four-digit years.
+subData$Date <- gsub("^\\d{2}", "20", subData$Date)
+summary(subData)
+
+```
+
+```{r}
+#converting the datatypes of other columns as suited
+subData$Date <- as.Date(subData$Date)
+summary(subData)
+str(subData)
+```
+
+```{r}
+#converting the datatypes of other columns as suited
+library(dplyr)
+
+# Convert Date column to Date type
+subData$Date <- as.Date(subData$Date)
+
+# Convert other columns to appropriate data types
+subData$TMAX..Degrees.Fahrenheit. <- as.numeric(subData$TMAX..Degrees.Fahrenheit.)
+subData$TMIN..Degrees.Fahrenheit. <- as.numeric(subData$TMIN..Degrees.Fahrenheit.)
+subData$PRCP..Inches. <- as.numeric(subData$PRCP..Inches.)
+subData$SNOW..Inches. <- as.numeric(subData$SNOW..Inches.)
+subData$SNWD..Inches. <- as.numeric(subData$SNWD..Inches.)
+subData$SNOW <- as.numeric(subData$SNOW)
+
+# Check the structure of the dataframe after data type conversion
+str(subData)
+```
+
+```{r}
+#dataset with modified columns and data displayed correctly
+summary(subData)
+```
+
+```{r}
+#return the indices of the elements in the "TMAX" column of newData where the value is NA.
+which(is.na(subData$TMAX))
+```
+
+```{r}
+#find the indices of missing values (NA) in the "TMIN" column of the newData dataframe.
+which(is.na(subData$TMIN))
+```
+#Since there are no empty values for Tmax and Tmin, we proceed with further analyiss.Or else we would have to remove the NA values individually.
+```{r}
+
+#replace NA values in the "SNOW" column of the subData dataframe with 0.
+subData$SNOW <- ifelse(is.na(subData$SNOW), 0, subData$SNOW)
+summary(subData)
+
+```
+
+
+-----------------------------------
+###### SNOW 
+
+### Merge Data
+
+```{r}
+
+lstation_data= read.csv('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/CTA-RidershipL_Station_EntriesMonthly.csv')
+summary(lstation_data)
+```
+
+```{r}
+#changing the datatype
+lstation_data$avg_weekday_rides <- as.numeric(gsub(",", "", lstation_data$avg_weekday_rides))
+lstation_data$avg_saturday_rides <- as.numeric(gsub(",", "", lstation_data$avg_saturday_rides))
+lstation_data$avg_sunday.holiday_rides <- as.numeric(gsub(",", "", lstation_data$avg_sunday.holiday_rides))
+lstation_data$monthtotal <- as.numeric(gsub(",", "", lstation_data$monthtotal))
+str(lstation_data)
+```
+
+
+
+```{r}
+summary(lstation_data)
+
+```
+
+```{r}
+# Convert month_beginning to Date format
+lstation_data$month_beginning <- as.Date(lstation_data$month_beginning, format = "%m/%d/%Y")
+
+# Filter the data for the year 2023
+lstation_2023 <- subset(lstation_data, format(month_beginning, "%Y") == "2023")
+
+# Print the filtered data
+print(lstation_2023)
+
+
+```
+
+
+```{r}
+#Create new column called no_of_trips by adding values of other 3 columns
+lstation_2023$no_of_trips <- lstation_2023$avg_weekday_rides + lstation_2023$avg_saturday_rides + lstation_2023$avg_sunday.holiday_rides
+print(lstation_2023)
+
+```
+
+
+
+
+```{r}
+
+# Check the columns of lstation_2023
+print(colnames(lstation_2023))
+
+# Check the columns of subData
+print(colnames(subData))
+
+```
+
+```{r}
+# Merge the datasets on the common column
+merged_data <- merge(lstation_2023, subData, by.x = "month_beginning", by.y = "Date", all = TRUE)
+
+# Check the structure of the merged dataset
+str(merged_data)
+
+```
+```{r}
+summary(merged_data)
+
+```
+
+```{r}
+#downloaded the merged file
+#write.csv(merged_data, "mergeddata_weather+rider.csv", row.names = FALSE)
+```
+
+```{r}
+colnames(merged_data)
+
+
+```
+
+
+```{r}
+#taking the required columns only
+merged_data = cbind(merged_data[1],merged_data[2],merged_data[8],merged_data[13])
+summary(merged_data)
+
+
+
+```
+
+
+
+```{r}
+#assign 0 to NA
+merged_data$SNOW <- ifelse(is.na(merged_data$SNOW), 0, merged_data$SNOW)
+summary(merged_data)
+```
+
+
+
+
+```{r}
+
+merged_data$Date <- gsub("^\\d{2}", "20", merged_data$month_beginning)
+merged_data$Date <- as.Date(merged_data$month_beginning)
+merged_data$Date <- gsub("^\\d{2}", "20", merged_data$month_beginning)
+merged_data$Date <- as.Date(merged_data$month_beginning)
+summary(merged_data)
+```
+
+
+
+
+```{r}
+
+#scatter plot 2*1
+par(mfrow = c(2, 1))
+plot(x=merged_data$SNOW,y=merged_data$no_of_trips,xlab = "SNOW" ,ylab = "Number of trips",main = "SNOW vs Number of Trips 2023",col.main="Blue")
+
+
+```
+##TEMPERATURE
+
+```{r}
+
+tempdata_merge = read.csv(file.path('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/mergeddata_weather+rider.csv'))
+summary(tempdata_merge)
+
+```
+```{r}
+colnames(tempdata_merge)
+```
+
+```{r}
+
+shortdata = cbind(tempdata_merge[8],tempdata_merge[9])
+summary(shortdata)
+
+```
+
+```{r}
+str(shortdata)
+
+```
+
+
+```{r}
+# Calculate the mean value for the "Avg_temp" column
+mean_Avg_temp <- mean(shortdata$TAVG.Calc.F., na.rm = TRUE)
+
+# Check if there are missing values in the "Avg_temp" column
+if (any(is.na(shortdata$TAVG.Calc.F.))) {
+  # Replace missing values with the mean value
+  shortdata$TAVG.Calc.F.[is.na(shortdata$TAVG.Calc.F.)] <- mean_Avg_temp
+} else {
+  print("No missing values found in Avg_temp column.")
+}
+
+# Display a summary of the updated dataframe
+summary(shortdata)
+
+
+
+
+```
+
+
+```{r}
+# Set up a 2x1 plot layout
+par(mfrow = c(2, 1))
+
+# Create a scatter plot with customizations
+plot(x = shortdata$TAVG.Calc.F., 
+     y = shortdata$no_of_trips, 
+     xlab = "Average Temperature", 
+     ylab = "Number of Trips",
+     main = "Relationship between Average Temperature and Number of Trips",
+     col = "darkgreen",       # Set color of data points
+         col.main = "blue",  # Set main title color
+     font.main = 4       # Set main title font style (bold)
+)
+
+```
+###PRECIPITATION
+```{r}
+tempdata_merge = read.csv(file.path('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/mergeddata_weather+rider.csv'))
+summary(tempdata_merge)
+
+
+
+
+```
+
+
+```{r}
+
+precipData = cbind(tempdata_merge[8],tempdata_merge[12])
+summary(precipData)
+
+
+```
+
+```{r}
+mean <- mean(precipData$PRCP, na.rm = TRUE)
+precipData$PRCP <- ifelse(is.na(precipData$PRCP), mean, precipData$PRCP)
+summary(precipData)
+
+
+
+
+```
+
+```{r}
+# Set up a 2x1 plot layout
+par(mfrow = c(2, 1))
+
+# Create a scatter plot with customizations
+plot(x = precipData$PRCP,
+     y = precipData$PRCP,
+     xlab = "Precipitation",
+     ylab = "Number of Trips",
+     main = "Relationship between Precipitation and Number of Trips",
+     col = "blue",          # Set color of data points
+     pch = 16,              # Set symbol shape (filled circle)
+     cex = 1,             # Set symbol size
+     cex.axis = 1.2,        # Set axis label size
+     cex.lab = 1.2,         # Set axis title size
+     cex.main = 1.4,        # Set main title size
+     col.main = "darkgreen",# Set main title color
+     font.main = 4          # Set main title font style (bold)
+)
+
+
+
+
+```
+
+###MODEL 
+
+
+```{r}
+MODELdata = read.csv(file.path('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/mergeddata_weather+rider.csv'))
+summary(MODELdata)
+
+```
+
+
+```{R}
+
+MODELdata = cbind( MODELdata[8], MODELdata[9], MODELdata[12], MODELdata[13])
+summary(MODELdata)
+```
+
+```{R}
+mean <- mean(MODELdata$no_of_trips, na.rm = TRUE)
+MODELdata$no_of_trips <- ifelse(is.na(MODELdata$no_of_trips), mean, MODELdata$no_of_trips)
+summary(MODELdata)
+
+```
+
+```{R}
+mean <- mean(MODELdata$TAVG.Calc.F., na.rm = TRUE)
+MODELdata$Avgtemp <- ifelse(is.na(MODELdata$TAVG.Calc.F.), mean, MODELdata$TAVG.Calc.F.)
+summary(MODELdata)
+
+```
+
+```{R}
+
+MODELdata$SNOW <- ifelse(is.na(MODELdata$SNOW..Inches.), mean, MODELdata$SNOW..Inches.)
+summary(MODELdata)
+```
+
+```{R}
+
+mean<- mean(MODELdata$PRCP..Inches., na.rm = TRUE)
+MODELdata$PRCP <- ifelse(is.na(MODELdata$PRCP..Inches.), mean, MODELdata$PRCP..Inches.)
+summary(MODELdata)
+```
+
+
+```{R}
+# create the multiple linear regression model
+model1 <- lm(MODELdata$no_of_trips ~ MODELdata$Avgtemp + MODELdata$PRCP + MODELdata$SNOW)
+# view the summary output of the model
+summary(model1)
+
+
+```
+
+```{R}
+length(MODELdata$SNOW)
+
+```
+
+
+```{R}
+length(MODELdata$PRCP)
+
+```
+
+```{R}
+length(MODELdata$Avgtemp)
+
+```
+
+```{R}
+# Install and load required packages
+install.packages("plot3D")
+library(plot3D)
+
+
+# Generate predicted values for number_of_trips based on Avgtemp, precipitation, and snow
+pred <- predict(model1, newdata = MODELdata[, c("Avgtemp", "PRCP", "SNOW")])
+
+
+# Plot the 3D scatter plot
+scatter3D(MODELdata$Avgtemp, MODELdata$PRCP, MODELdata$SNOW, 
+          colvar = MODELdata$no_of_trips,  # Color based on number_of_trips
+          pch = 16,                         # Set symbol shape (filled circle)
+          cex = 0.5,                        # Set symbol size
+          xlab = "Average daily temperature",     # X-axis label
+          ylab = "Precipitation",                 # Y-axis label
+          zlab = "Snow",                          # Z-axis label
+          main = "3D Scatter Plot of Weather Data" # Main title
+)
+
+```
+
+### LASSO 
+
+
+```{R}
+
+MODELdata = read.csv(file.path('C:/Users/vidip/OneDrive/Desktop/DPA/vid/project/datasets/mergeddata_weather+rider.csv'))
+summary(MODELdata)
+
+
+```
+
+```{R}
+
+MODELdata$Date <- gsub("^\\d{2}", "20", MODELdata$month_beginning )
+MODELdata$Date <- as.Date(MODELdata$ month_beginning )
+MODELdata$Date <- gsub("^\\d{2}", "20", MODELdata$ month_beginning )
+MODELdata$Date <- as.Date(MODELdata$ month_beginning )
+summary(MODELdata)
+
+```
+
+```{R}
+mean<- mean(MODELdata$Avg_temp, na.rm = TRUE)
+MODELdata$Avg_temp <- ifelse(is.na(MODELdata$TAVG.Calc.F.), mean_value, MODELdata$TAVG.Calc.F.)
+summary(MODELdata)
+
+```
+
+
+```{R}
+MODELdata$SNOW <- ifelse(is.na(MODELdata$SNOW..Inches.), 0, MODELdata$SNOW..Inches.)
+summary(MODELdata)
+```
+
+```{r}
+
+mean<- mean(MODELdata$PRCP..Inches., na.rm = TRUE)
+MODELdata$PRCP<- ifelse(is.na(MODELdata$PRCP..Inches.), mean, MODELdata$PRCP..Inches.)
+summary(MODELdata)
+colnames(MODELdata)
+```
+
+```{r}
+
+#MODELdata = cbind(MODELdata[15],MODELdata[2],MODELdata[8],MODELdata[16],weatherData[17], MODELdata[18])
+# Selecting specific columns from MODELdata
+MODELdata <- MODELdata[, c(15, 2, 8, 16, 17, 18)]
+
+# Display summary of the updated MODELdata
+
+
+summary(MODELdata)
+```
+
+
+
+
+
+```{r}
+install.packages("mice")
+
+library(mice)
+# Set seed for reproducibility
+set.seed(123)
+
+# Define number of observations
+n <- 100
+
+# Generate simulated data with missing values
+Date <- sample(seq(as.Date('2023-01-01'), as.Date('2023-12-31'), by="day"), n, replace=TRUE)
+station_id <- sample(40010:41700, n, replace=TRUE)
+no_of_trips <- sample(0:27057, n, replace=TRUE)
+Avg_temp <- rnorm(n, 14.228, 10)  # Using mean and sd from provided specifications
+SNOW <- rpois(n, 3)
+PRCP <- rnorm(n, 0.0624, 1)  # Using mean from provided specifications
+
+# Create data frame
+data <- data.frame(Date, station_id, no_of_trips, Avg_temp, SNOW, PRCP)
+
+# Randomly insert some missing values
+missing_prop <- 0.1  # Adjust as needed
+num_missing <- round(nrow(data) * missing_prop)
+missing_indices <- sample(1:nrow(data), num_missing)
+data[missing_indices, c("Avg_temp", "SNOW", "PRCP")] <- NA
+
+# Impute missing values using mice
+imp <- mice(data, m = 5, maxit = 50)
+
+```
+
+```{r}
+install.packages("glmnet")
+library(glmnet)
+# Extract the completed data
+data_imputed <- complete(imp)
+
+# Split the data into training and testing sets
+train_idx <- sample(1:nrow(data_imputed), nrow(data_imputed) / 2)
+train_data <- data_imputed[train_idx, ]
+test_data <- data_imputed[-train_idx, ]
+
+# Fit a Lasso regression model using glmnet
+x_train <- model.matrix(no_of_trips ~ ., data = train_data)[, -1]
+y_train <- train_data$no_of_trips
+lasso_fit <- glmnet(x_train, y_train, alpha = 1)
+
+# Use cross-validation to choose the best lambda value
+cv_fit <- cv.glmnet(x_train, y_train, alpha = 1)
+
+# Plot the cross-validation results
+plot(cv_fit)
+
+
+```
+
+```{r}
+
+# Use the selected lambda value to make predictions on the test set
+x_test <- model.matrix(no_of_trips ~ ., data = test_data)[, -1]
+y_test <- test_data$no_of_trips
+lasso_pred <- predict(lasso_fit, s = cv_fit$lambda.min, newx = x_test)
+
+# Calculate the mean squared error on the test set
+mse <- mean((lasso_pred - y_test)^2)
+
+# Calculate residual standard error
+rss <- sum((lasso_pred - y_test)^2)
+n <- length(y_test)
+p <- ncol(x_test)
+rse <- sqrt(rss / (n - p))
+
+# Calculate multiple R-squared
+rsq <- 1 - rss / sum((y_test - mean(y_test))^2)
+
+# Calculate adjusted R-squared
+adj_rsq <- 1 - (rss / (n - p)) / ((n - 1) / (n - p - 1))
+
+# Calculate F statistic
+f_stat <- (sum((lasso_pred - mean(y_test))^2) / p) / (rss / (n - p))
+
+print(mse)
+print(rsq)
+print(adj_rsq)
+print(f_stat)
+
+```
+
+```{r}
+# Create a scatter plot of predicted vs. actual values
+plot(y_test, lasso_pred, main = "Predicted vs. Actual Values",
+     xlab = "Actual Values", ylab = "Predicted Values", col = "blue")
+
+# Add a diagonal line for reference (perfect prediction)
+abline(0, 1, col = "red")
+
+# Add a legend
+legend("topleft", legend = c("Predicted vs. Actual", "Perfect Prediction"),
+       col = c("blue", "red"), pch = 1)
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

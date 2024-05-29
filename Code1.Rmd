@@ -1,0 +1,522 @@
+---
+title: "CSP571 Code"
+author: "Juveriya"
+date: "2024-04-17"
+output:
+  html_document: default
+ 
+---
+# CTA BUS ROUTE DATASET
+
+```{r}
+# Import the required libraries
+library(dplyr)
+library(ggplot2)
+
+# Load the Bus Route dataset 
+
+busRoute <- read.csv("CTA_Bus_Routes.csv")
+summary(busRoute)
+```
+```{r}
+# Print column names
+print(names(busRoute))
+```
+## Data Cleaning 
+
+
+
+```{r}
+# Checking the structure
+str(busRoute)
+```
+```{r}
+busRoute$Month_Beginning <- as.Date(busRoute$Month_Beginning, format = "%m/%d/%Y")
+years <- unique(format(busRoute$Month_Beginning, "%Y"))
+num_years <- length(years)
+print(num_years)
+cat("List of years:", paste(years, collapse = ", "))
+
+# Filter the data for the years 2013 to 2023
+busRoute_data <- busRoute[format(busRoute$Month_Beginning, "%Y") %in% c("2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023"), ]
+print(head(busRoute_data))
+
+```
+
+
+
+```{r}
+# Convert numerical columns to numeric, removing commas in the process
+busRoute_data$Avg_Weekday_Rides <- as.numeric(gsub(",", "", busRoute_data$Avg_Weekday_Rides))
+busRoute_data$Avg_Saturday_Rides <- as.numeric(gsub(",", "", busRoute_data$Avg_Saturday_Rides))
+busRoute_data$Avg_Sunday.Holiday_Rides <- as.numeric(gsub(",", "", busRoute_data$Avg_Sunday.Holiday_Rides))
+busRoute_data$MonthTotal <- as.numeric(gsub(",", "", busRoute_data$MonthTotal))
+```
+
+```{r}
+# Check the number of rows and columns in the dataset
+dim(busRoute_data)
+```
+
+```{r}
+
+```
+
+```{r}
+# Check for missing values in the entire dataset
+missing_values <- colSums(is.na(busRoute_data))
+print(missing_values)
+```
+
+
+```{r}
+# Check for duplicate rows
+duplicate_rows <- busRoute_data[duplicated(busRoute_data), ]
+print(duplicate_rows)
+```
+
+
+
+```{r}
+length(unique(busRoute_data$routename))
+#unique(busRoute_data$routename)
+```
+
+
+```{r}
+nrow(busRoute_data)
+```
+
+## Exploratory Data Analysis
+
+```{r}
+# Calculate average weekday, Saturday, and Sunday/holiday rides for each route
+summary_df <- busRoute_data %>% 
+  group_by(routename) %>% 
+  summarize(Weekday = mean(Avg_Weekday_Rides),
+            Saturday= mean(Avg_Saturday_Rides),
+            Sunday_Holiday = mean(Avg_Sunday.Holiday_Rides))
+```
+
+
+```{r}
+# Subset the sorted routes based on average weekday rides
+top_15_weekday <- head(summary_df[order(summary_df$Weekday, decreasing = TRUE), ], n = 15)
+
+# Create a horizontal bar plot for top 15 routes based on average weekday rides
+ggplot(top_15_weekday, aes(x = Weekday, y = reorder(routename, -Weekday), fill = Weekday)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Weekday Ridership Average", y = "Name of Bus Route") +
+  ggtitle("Bus Routes with Most Weekday Ridership") +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +  # Gradient color scale
+  theme(axis.text.y = element_text(hjust = 1))
+
+
+```
+
+
+
+
+```{r}
+# Subset the sorted routes based on average Saturday rides
+top_15_saturday <- head(summary_df[order(summary_df$Saturday, decreasing = TRUE), ], n = 15)
+# Create a horizontal bar plot for top 15 routes based on average Saturday rides
+ggplot(top_15_saturday, aes(x = Saturday, y = reorder(routename, -Saturday), fill = Saturday)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Saturday Ridership ", y = "Name of Bus Route") +
+  ggtitle("Bus Routes with Most Saturday Ridership") +
+  scale_fill_gradient(low = "lightgreen", high = "darkgreen") +  # Gradient color scale
+  theme(axis.text.y = element_text(hjust = 1))
+
+
+```
+
+
+
+```{r}
+# Subset the sorted routes based on average Sunday/holiday rides
+top_15_sunday_holiday <- head(summary_df[order(summary_df$Sunday_Holiday, decreasing = TRUE), ], n = 15)
+
+# Create a horizontal bar plot for top 15 routes based on average Sunday/holiday rides
+ggplot(top_15_sunday_holiday, aes(x = Sunday_Holiday, y = reorder(routename, -Sunday_Holiday), fill = Sunday_Holiday)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Sunday/Holiday Rides", y = "Name of Bus Route") +
+  ggtitle("Bus Routes with Most Sunday/Holiday Riderships") +
+  scale_fill_gradient(low = "lightcoral", high = "darkred") +  # Gradient color scale with different colors
+  theme(axis.text.y = element_text(hjust = 1))
+
+```
+```{r}
+# Subset the sorted routes based on average Saturday rides
+top_15_sunday_holiday <- head(summary_df[order(summary_df$Saturday, decreasing = TRUE), ], n = 15)
+
+# Create a horizontal bar plot for top 15 routes based on average Sunday/holiday rides
+ggplot(top_15_sunday_holiday, aes(x = Saturday, y = reorder(routename, -Saturday), fill = Saturday)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Saturday Rides", y = "Name of Bus Route") +
+  ggtitle("Bus Routes with Most Saturday Riderships") +
+  scale_fill_gradient(low = "lightgreen", high = "lightblue") +  # Gradient color scale with different colors
+  theme(axis.text.y = element_text(hjust = 1))
+
+```
+```{r}
+# Subset the sorted routes based on average weekday rides
+bot_15_weekday <- tail(summary_df[order(summary_df$Weekday, decreasing = TRUE), ], n = 15)
+
+# Create a horizontal bar plot for top 15 routes based on average weekday rides
+ggplot(bot_15_weekday, aes(x = Weekday, y = reorder(routename, -Weekday), fill = Weekday)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Weekday Ridership Average", y = "Name of Bus Route") +
+  ggtitle("Bus Routes with Least Weekday Ridership") +
+  scale_fill_gradient(low = "lightpink", high = "purple") +  # Gradient color scale
+  theme(axis.text.y = element_text(hjust = 1))
+
+
+```
+```{r}
+# Subset the sorted routes based on average sunday rides
+bot_15_weekday <- tail(summary_df[order(summary_df$Sunday_Holiday, decreasing = TRUE), ], n = 15)
+
+# Create a horizontal bar plot for top 15 routes based on average weekday rides
+ggplot(bot_15_weekday, aes(x = Sunday_Holiday, y = reorder(routename, -Sunday_Holiday), fill = Sunday_Holiday)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Sunday/Holiday Ridership Average", y = "Name of Bus Route") +
+  ggtitle("Bus Routes with Least Sunday/Holiday Ridership") +
+  scale_fill_gradient(low = "lightpink", high = "purple") +  # Gradient color scale
+  theme(axis.text.y = element_text(hjust = 1))
+
+
+```
+## CTA L Station Dataset
+
+```{r}
+lstation_data <- read.csv("CTA_L_Station_Entries.csv", header = TRUE)
+summary(lstation_data)
+```
+
+### Data Cleaning 
+
+```{r}
+print(names(lstation_data))
+```
+```{r}
+lstation_data$month_beginning <- as.Date(lstation_data$month_beginning, format = "%m/%d/%Y")
+years <- unique(format(lstation_data$month_beginning, "%Y"))
+num_years <- length(years)
+print(num_years)
+cat("List of years:", paste(years, collapse = ", "))
+
+#Filter the data for the years 2013 to 2023
+lstation <- lstation_data[format(lstation_data$month_beginning, "%Y") %in% c("2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023"), ]
+print(tail(lstation))
+```
+```{r}
+nrow(lstation)
+```
+
+```{r}
+str(lstation)
+```
+```{r}
+
+# Remove commas and convert numeric columns to numeric data types
+lstation$avg_weekday_rides <- as.numeric(gsub(",", "", lstation$avg_weekday_rides))
+lstation$avg_saturday_rides <- as.numeric(gsub(",", "", lstation$avg_saturday_rides))
+lstation$avg_sunday.holiday_rides <- as.numeric(gsub(",", "", lstation$avg_sunday.holiday_rides))
+lstation$monthtotal <- as.numeric(gsub(",", "", lstation$monthtotal))
+
+```
+
+```{r}
+# Check for missing values 
+missing_values <- colSums(is.na(lstation))
+print(missing_values)
+# Check for duplicate rows
+duplicate_rows <- lstation[duplicated(lstation), ]
+print(duplicate_rows)
+```
+
+
+```{r}
+station_mean <- lstation %>%
+  group_by(stationame) %>%
+  summarize(avg_weekday = mean(avg_weekday_rides),
+            avg_sat = mean(avg_saturday_rides),
+            avg_sun = mean(avg_sunday.holiday_rides))
+```
+
+```{r}
+sum <- station_mean[order(station_mean$avg_weekday, decreasing = TRUE),]
+# Find the top 15 stations on week day
+sum <- head(sum, n = 15)
+sum$stationame <- factor(sum$stationame, levels = sum$stationame[order(sum$avg_weekday)])
+colors <- viridis::inferno(nrow(sum))
+
+# Plot the graph
+ggplot(sum, aes(x = avg_weekday, y = stationame, fill=stationame)) +
+geom_bar(stat = "identity") +
+labs(x = "Weekday Ridership Average", y = "Name of Station") +
+ggtitle("Station Routes with Highest Weekday Ridership") +
+scale_fill_manual(values = colors)
+
+
+```
+
+```{r}
+
+sum <- station_mean[order(station_mean$avg_sat, decreasing = TRUE),]
+# Find the top 15 stations on Saturday
+sum <- head(sum, n = 15)
+sum$stationame <- factor(sum$stationame, levels = sum$stationame[order(sum$avg_sat)])
+colors <- viridis::viridis(nrow(sum))
+
+# Plot the graph
+ggplot(sum, aes(x = avg_sat, y = stationame, fill=stationame)) +
+geom_bar(stat = "identity") +
+labs(x = "Saturday Ridership Average", y = "Name of Station") +
+ggtitle("Station Routes with Highest Saturday Ridership") +
+scale_fill_manual(values = colors)
+
+```
+
+```{r}
+
+sum <- station_mean[order(station_mean$avg_sun, decreasing = TRUE),]
+# Find the top 15 stations on saturday
+sum <- head(sum, n = 15)
+sum$stationame <- factor(sum$stationame, levels = sum$stationame[order(sum$avg_sun)])
+colors <- viridis::plasma(nrow(sum))
+
+# Plot the graph
+ggplot(sum, aes(x = avg_sun, y = stationame, fill=stationame)) +
+geom_bar(stat = "identity") +
+labs(x = "Sunday/Holiday Ridership Average", y = "Name of Station") +
+ggtitle("Station Routes with Highest Sunday/Holiday Ridership") +
+scale_fill_manual(values = colors)
+
+
+
+
+```
+
+
+
+```{r}
+sum <- station_mean[order(station_mean$avg_weekday, decreasing = TRUE),]
+# Find the bottom 15 stations on week day
+sum <- tail(sum, n = 15)
+sum$stationame <- factor(sum$stationame, levels = sum$stationame[order(sum$avg_weekday)])
+colors <- viridis::inferno(nrow(sum))
+
+# Plot the graph
+ggplot(sum, aes(x = avg_weekday, y = stationame, fill=stationame)) +
+geom_bar(stat = "identity") +
+labs(x = "Weekday Ridership Average", y = "Name of Station") +
+ggtitle("Station Routes with Least Weekday Ridership") +
+scale_fill_manual(values = colors)
+
+
+```
+
+
+
+## More EDA FOR Lstation & Bus Route
+
+```{r}
+library(lubridate)
+# Filter data for the year 2023
+lstation_2023 <- lstation %>%
+  filter(year(month_beginning) == 2023)
+# Create a scatter plot
+ggplot(data = lstation_2023, aes(x = month_beginning, y = monthtotal)) +
+  
+  geom_point(color = "plum") +
+  labs(x = "Month", y = "Monthly Rides", title = "Monthly Station Rides in 2023")
+
+```
+
+
+```{r}
+# Filter data for the year 2023
+Bus_2023 <- busRoute_data %>%
+  filter(year(Month_Beginning) == 2023)
+# Create a scatter plot
+ggplot(data = Bus_2023, aes(x = Month_Beginning, y = MonthTotal)) +
+  
+  geom_point(color = "purple") +
+  labs(x = "Month", y = "Monthly Rides", title = "Monthly Bus Rides in 2023")
+
+```
+```{r}
+
+```
+
+```{r}
+ggplot(lstation, aes(x = monthtotal)) +  
+  geom_line(aes(y = avg_weekday_rides, color = "Weekday"), linetype = "dotted") +
+  geom_line(aes(y = avg_saturday_rides, color = "Saturday"), linetype = "dotted") + 
+  geom_line(aes(y = avg_sunday.holiday_rides, color = "Sunday/Holiday"), linetype = "dotted") + 
+  ggtitle("Analyzing L-Train Ridership by Day Type") +  
+  xlab("Monthly Rides") +  
+  ylab("Rides") +
+  scale_color_manual(
+    name = "Days",  # Set legend name
+    values = c("navy", "steelblue", "plum"),  # Set colors for lines
+    labels = c("Weekday", "Saturday", "Sunday/Holiday")  # Set labels for legend
+  )
+
+```
+
+```{r}
+
+ggplot(busRoute_data, aes(x = MonthTotal)) +  
+  geom_line(aes(y = Avg_Weekday_Rides, color = "Weekday"), linetype = "dotted") +
+  geom_line(aes(y = Avg_Saturday_Rides, color = "Saturday"), linetype = "dotted") + 
+  geom_line(aes(y = Avg_Sunday.Holiday_Rides, color = "Sunday/Holiday"), linetype = "dotted") + 
+  ggtitle("Analyzing Bus Route Ridership by Day Type") +  
+  xlab("Monthly Rides") +  
+  ylab("Rides") +
+  scale_color_manual(
+    name = "Days",  # Set legend name
+    values = c("#4E79A7", "#F28E2B", "#E15759"),  # Set colors for lines
+    labels = c("Weekday", "Saturday", "Sunday/Holiday")  # Set labels for legend
+  )
+
+
+```
+### Maximum and Minimum traffic on Bus Route
+```{r}
+# Aggregate data to calculate total traffic for each day type
+traffic_bus <- busRoute_data %>%
+  summarise(
+    total_weekday_traffic = sum(Avg_Weekday_Rides),
+    total_saturday_traffic = sum(Avg_Saturday_Rides),
+    total_sunday_holiday_traffic = sum(Avg_Sunday.Holiday_Rides)
+  )
+
+# Print the total traffic for each day type
+print(traffic_bus)
+```
+### Maximum and Minimum traffic on L-Station
+```{r}
+# Aggregate data to calculate total traffic for each day type
+traffic_station <- lstation %>%
+  summarise(
+    total_weekday_traffic = sum(avg_weekday_rides),
+    total_saturday_traffic = sum(avg_saturday_rides),
+    total_sunday_holiday_traffic = sum(avg_sunday.holiday_rides)
+  )
+
+# Print the total traffic for each day type
+print(traffic_station)
+```
+
+```{r}
+
+```
+
+
+
+```{r}
+print(names(busRoute_data))
+print(names(lstation))
+```
+
+
+
+```{r}
+
+
+# Subset data for the 79th route
+route_79 <- summary_df[summary_df$routename == "79th", ]
+
+# Create a data frame for plotting
+plot_data <- data.frame(
+  Day = c("Sunday/Holiday", "Saturday", "Weekday"),
+  Ridership = c(route_79$Sunday_Holiday, route_79$Saturday, route_79$Weekday)
+)
+
+# Create the bar plot
+ggplot(plot_data, aes(x = Day, y = Ridership, fill = Day)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Day of the Week", y = "Average Ridership", fill = "Day of the Week") +
+  ggtitle("Average Ridership on 79th Route") +
+  scale_fill_manual(values = c("Sunday/Holiday" = "lightcoral", "Saturday" = "lightgreen", "Weekday" = "lightblue")) +
+  theme_minimal()
+
+
+```
+
+
+```{r}
+# Subset data for the Avon
+route_ashland <- summary_df[summary_df$routename == "Avon Express", ]
+
+# Create a data frame for plotting
+plot_data_ashland <- data.frame(
+  Day = c("Sunday/Holiday", "Saturday", "Weekday"),
+  Ridership = c(route_ashland$Sunday_Holiday, route_ashland$Saturday, route_ashland$Weekday)
+)
+
+# Create the bar plot for Avon route
+ggplot(plot_data_ashland, aes(x = Day, y = Ridership, fill = Day)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Day of the Week", y = "Average Ridership", fill = "Day of the Week") +
+  ggtitle("Average Ridership on Avon Route") +
+  scale_fill_manual(values = c("Sunday/Holiday" = "lightpink", "Saturday" = "lightyellow", "Weekday" = "lightgreen")) +
+  theme_minimal()
+```
+
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+
+
+```{r}
+
+
+```
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
